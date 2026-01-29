@@ -1,32 +1,32 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from 'react'
-import { SidebarInset } from '@/components/ui/sidebar'
-import { ChatInput } from '@/components/chat/chat-input'
-import { ModelSelector } from '@/components/chat/model-selector'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import PromptSuggestions from '@/components/chat/prompt-suggestions'
-import type { Session } from 'next-auth'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
-import type { Model } from '@/types/model.types'
-import { updateUserSettingsRaw } from '@/lib/api/userSettings'
-import { useChatStore } from '@/lib/modules/chat/chat.client-store'
+import { useEffect, useState } from "react";
+import { SidebarInset } from "@/components/ui/sidebar";
+import { ChatInput } from "@/components/chat/chat-input";
+import { ModelSelector } from "@/components/chat/model-selector";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import PromptSuggestions from "@/components/chat/prompt-suggestions";
+import type { Session } from "next-auth";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import type { Model } from "@/types/model.types";
+import { updateUserSettingsRaw } from "@/lib/api/userSettings";
+import { useChatStore } from "@/lib/modules/chat/chat.client-store";
 
 interface ChatLandingProps {
-  session: Session | null
-  initialModels: Model[]
-  initialUserSettings?: Record<string, any>
-  webSearchAvailable?: boolean
-  imageAvailable?: boolean
+  session: Session | null;
+  initialModels: Model[];
+  initialUserSettings?: Record<string, any>;
+  webSearchAvailable?: boolean;
+  imageAvailable?: boolean;
   permissions?: {
-    workspaceTools: boolean
-    webSearch: boolean
-    imageGeneration: boolean
-    codeInterpreter: boolean
-    stt: boolean
-    tts: boolean
-  }
+    workspaceTools: boolean;
+    webSearch: boolean;
+    imageGeneration: boolean;
+    codeInterpreter: boolean;
+    stt: boolean;
+    tts: boolean;
+  };
 }
 
 export function ChatLanding({
@@ -35,129 +35,175 @@ export function ChatLanding({
   initialUserSettings = {},
   webSearchAvailable = true,
   imageAvailable = true,
-  permissions
+  permissions,
 }: ChatLandingProps) {
-  const router = useRouter()
+  const router = useRouter();
   const [selectedModel, setSelectedModel] = useState<Model | null>(() => {
-    const activeModels = initialModels.filter(m => m.isActive && !(m as any).meta?.hidden)
-    const saved = (initialUserSettings as any)?.ui?.models?.[0]
+    const activeModels = initialModels.filter(
+      (m) => m.isActive && !(m as any).meta?.hidden,
+    );
+    const saved = (initialUserSettings as any)?.ui?.models?.[0];
     if (saved && activeModels.length > 0) {
-      const normalize = (v: string) => v.trim().toLowerCase()
-      const savedNorm = normalize(saved)
+      const normalize = (v: string) => v.trim().toLowerCase();
+      const savedNorm = normalize(saved);
       const preferred = activeModels.find((m) => {
-        const idMatch = normalize(m.id) === savedNorm
-        const providerId = (m as any).providerId as string | undefined
-        const providerMatch = providerId ? normalize(providerId) === savedNorm : false
-        const providerSuffixMatch = providerId ? normalize((providerId.split('/').pop() || providerId)) === savedNorm : false
-        const nameMatch = normalize(m.name) === savedNorm
-        return idMatch || providerMatch || providerSuffixMatch || nameMatch
-      })
-      if (preferred) return preferred
+        const idMatch = normalize(m.id) === savedNorm;
+        const providerId = (m as any).providerId as string | undefined;
+        const providerMatch = providerId
+          ? normalize(providerId) === savedNorm
+          : false;
+        const providerSuffixMatch = providerId
+          ? normalize(providerId.split("/").pop() || providerId) === savedNorm
+          : false;
+        const nameMatch = normalize(m.name) === savedNorm;
+        return idMatch || providerMatch || providerSuffixMatch || nameMatch;
+      });
+      if (preferred) return preferred;
     }
-    return activeModels.length > 0 ? activeModels[0] : null
-  })
-  const { resetChat, startNewChat } = useChatStore()
+    return activeModels.length > 0 ? activeModels[0] : null;
+  });
+  const { resetChat, startNewChat } = useChatStore();
 
   useEffect(() => {
     // Initialize from saved/default only when nothing is selected yet
-    if (selectedModel) return
-    const activeModels = initialModels.filter(m => m.isActive && !(m as any).meta?.hidden)
-    const saved = (initialUserSettings as any)?.ui?.models?.[0]
+    if (selectedModel) return;
+    const activeModels = initialModels.filter(
+      (m) => m.isActive && !(m as any).meta?.hidden,
+    );
+    const saved = (initialUserSettings as any)?.ui?.models?.[0];
     if (saved && activeModels.length > 0) {
-      const normalize = (v: string) => v.trim().toLowerCase()
-      const savedNorm = normalize(saved)
+      const normalize = (v: string) => v.trim().toLowerCase();
+      const savedNorm = normalize(saved);
       const preferred = activeModels.find((m) => {
-        const idMatch = normalize(m.id) === savedNorm
-        const providerId = (m as any).providerId as string | undefined
-        const providerMatch = providerId ? normalize(providerId) === savedNorm : false
-        const providerSuffixMatch = providerId ? normalize((providerId.split('/').pop() || providerId)) === savedNorm : false
-        const nameMatch = normalize(m.name) === savedNorm
-        return idMatch || providerMatch || providerSuffixMatch || nameMatch
-      })
-      if (preferred) { setSelectedModel(preferred); return }
+        const idMatch = normalize(m.id) === savedNorm;
+        const providerId = (m as any).providerId as string | undefined;
+        const providerMatch = providerId
+          ? normalize(providerId) === savedNorm
+          : false;
+        const providerSuffixMatch = providerId
+          ? normalize(providerId.split("/").pop() || providerId) === savedNorm
+          : false;
+        const nameMatch = normalize(m.name) === savedNorm;
+        return idMatch || providerMatch || providerSuffixMatch || nameMatch;
+      });
+      if (preferred) {
+        setSelectedModel(preferred);
+        return;
+      }
     }
-    if (activeModels.length > 0) setSelectedModel(activeModels[0])
-  }, [initialModels, initialUserSettings, selectedModel])
+    if (activeModels.length > 0) setSelectedModel(activeModels[0]);
+  }, [initialModels, initialUserSettings, selectedModel]);
 
   const handleModelSelect = async (model: Model) => {
-    setSelectedModel(model)
+    setSelectedModel(model);
     try {
       const updatedSettings = {
         ...(initialUserSettings || {}),
         ui: {
           ...((initialUserSettings || {}).ui || {}),
-          models: [(((model as any).providerId) || model.id)]
-        }
-      }
+          models: [(model as any).providerId || model.id],
+        },
+      };
       if (session?.user?.id) {
-        await updateUserSettingsRaw(session.user.id, updatedSettings)
+        await updateUserSettingsRaw(session.user.id, updatedSettings);
       }
     } catch (error) {
-      console.error('Failed to save model selection:', error)
+      console.error("Failed to save model selection:", error);
     }
-  }
+  };
 
   const beginChat = async (
     prompt: string,
     options?: { referencedChats?: { id: string; title?: string | null }[] },
-    attachedFiles?: Array<{ file: File; localId: string } | { fileId: string; fileName: string }>
+    attachedFiles?: Array<
+      { file: File; localId: string } | { fileId: string; fileName: string }
+    >,
   ) => {
     if (!selectedModel) {
-      toast.error('Please select a model first.')
-      return
+      toast.error("Please select a model first.");
+      return;
     }
 
     // Reset any previous chat state and optimistically start
-    resetChat()
+    resetChat();
     try {
-      const chatId = await startNewChat(prompt, selectedModel, attachedFiles)
+      const chatId = await startNewChat(prompt, selectedModel, attachedFiles);
       try {
-        const baseKey = 'chat-input'
-        const chatKey = `chat-input-${chatId}`
-        const handoffKey = `chat-handoff-${chatId}`
-        const raw = sessionStorage.getItem(baseKey)
+        const baseKey = "chat-input";
+        const chatKey = `chat-input-${chatId}`;
+        const handoffKey = `chat-handoff-${chatId}`;
+        const raw = sessionStorage.getItem(baseKey);
         if (raw) {
           try {
-            const data = JSON.parse(raw)
-            if (data && typeof data === 'object') {
-              data.prompt = ""
+            const data = JSON.parse(raw);
+            if (data && typeof data === "object") {
+              data.prompt = "";
               // If referenced chats were provided on submit, ensure they are persisted as context pills
-              if (options?.referencedChats && Array.isArray(options.referencedChats) && options.referencedChats.length > 0) {
-                const pills = (options.referencedChats || []).map((r) => ({ id: `chat:${r.id}`, name: r.title || 'Chat', type: 'chat' }))
-                const existingFiles = Array.isArray((data as any).contextFiles) ? (data as any).contextFiles : []
-                ;(data as any).contextFiles = [...existingFiles.filter((f: any) => !(f && typeof f.id === 'string' && String(f.id).startsWith('chat:'))), ...pills]
+              if (
+                options?.referencedChats &&
+                Array.isArray(options.referencedChats) &&
+                options.referencedChats.length > 0
+              ) {
+                const pills = (options.referencedChats || []).map((r) => ({
+                  id: `chat:${r.id}`,
+                  name: r.title || "Chat",
+                  type: "chat",
+                }));
+                const existingFiles = Array.isArray((data as any).contextFiles)
+                  ? (data as any).contextFiles
+                  : [];
+                (data as any).contextFiles = [
+                  ...existingFiles.filter(
+                    (f: any) =>
+                      !(
+                        f &&
+                        typeof f.id === "string" &&
+                        String(f.id).startsWith("chat:")
+                      ),
+                  ),
+                  ...pills,
+                ];
               }
-              sessionStorage.setItem(chatKey, JSON.stringify(data))
+              sessionStorage.setItem(chatKey, JSON.stringify(data));
               // Also write a small handoff record for robustness across timing races
-              if (options?.referencedChats && options.referencedChats.length > 0) {
-                sessionStorage.setItem(handoffKey, JSON.stringify({ referencedChats: options.referencedChats }))
+              if (
+                options?.referencedChats &&
+                options.referencedChats.length > 0
+              ) {
+                sessionStorage.setItem(
+                  handoffKey,
+                  JSON.stringify({ referencedChats: options.referencedChats }),
+                );
               }
             } else {
-              sessionStorage.setItem(chatKey, raw)
+              sessionStorage.setItem(chatKey, raw);
             }
           } catch {
-            sessionStorage.setItem(chatKey, raw)
+            sessionStorage.setItem(chatKey, raw);
           }
-          sessionStorage.removeItem(baseKey)
+          sessionStorage.removeItem(baseKey);
         } else {
           // Even if baseKey is missing, still write handoff so the next page can pick it up
           if (options?.referencedChats && options.referencedChats.length > 0) {
-            sessionStorage.setItem(handoffKey, JSON.stringify({ referencedChats: options.referencedChats }))
+            sessionStorage.setItem(
+              handoffKey,
+              JSON.stringify({ referencedChats: options.referencedChats }),
+            );
           }
         }
       } catch {}
-      router.replace(`/c/${chatId}`)
+      router.replace(`/c/${chatId}`);
     } catch (e) {
-      toast.error('Failed to start conversation. Please try again.')
+      toast.error("Failed to start conversation. Please try again.");
     }
-  }
+  };
 
   return (
     <SidebarInset>
       <div className="flex flex-col h-full">
         <div className="border-b">
           <ModelSelector
-            key={`model-selector-${selectedModel?.id || 'none'}`}
+            key={`model-selector-${selectedModel?.id || "none"}`}
             selectedModelId={selectedModel?.id}
             onModelSelect={handleModelSelect}
             models={initialModels}
@@ -172,7 +218,9 @@ export function ChatLanding({
                 <div className="flex items-center justify-center gap-4">
                   <Avatar className="h-12 w-12">
                     <AvatarImage
-                      src={selectedModel.meta?.profile_image_url || "/OpenChat.png"}
+                      src={
+                        selectedModel.meta?.profile_image_url || "/OpenChat.png"
+                      }
                       alt={selectedModel.name}
                     />
                     <AvatarFallback>
@@ -199,20 +247,40 @@ export function ChatLanding({
               <>
                 <ChatInput
                   placeholder={"Ask me anything..."}
-                onSubmit={(value, options, overrideModel, isAutoSend, streamHandlers, attachedFiles) => { 
-                  void beginChat(value, options as any, attachedFiles) 
+                  onSubmit={(
+                    value,
+                    options,
+                    overrideModel,
+                    isAutoSend,
+                    streamHandlers,
+                    attachedFiles,
+                  ) => {
+                    void beginChat(value, options as any, attachedFiles);
                   }}
                   disabled={false}
-                  sessionStorageKey={'chat-input'}
-                  webSearchAvailable={webSearchAvailable && !!permissions?.workspaceTools && !!permissions?.webSearch}
-                  imageAvailable={imageAvailable && !!permissions?.workspaceTools && !!permissions?.imageGeneration}
-                  codeInterpreterAvailable={!!permissions?.workspaceTools && !!permissions?.codeInterpreter}
+                  sessionStorageKey={"chat-input"}
+                  webSearchAvailable={
+                    webSearchAvailable &&
+                    !!permissions?.workspaceTools &&
+                    !!permissions?.webSearch
+                  }
+                  imageAvailable={
+                    imageAvailable &&
+                    !!permissions?.workspaceTools &&
+                    !!permissions?.imageGeneration
+                  }
+                  codeInterpreterAvailable={
+                    !!permissions?.workspaceTools &&
+                    !!permissions?.codeInterpreter
+                  }
                   sttAllowed={!!permissions?.stt}
                   ttsAllowed={!!permissions?.tts}
                 />
                 <PromptSuggestions
                   disabled={false}
-                  onSelect={(prompt) => { void beginChat(prompt) }}
+                  onSelect={(prompt) => {
+                    void beginChat(prompt);
+                  }}
                 />
               </>
             </div>
@@ -228,7 +296,5 @@ export function ChatLanding({
         </div>
       </div>
     </SidebarInset>
-  )
+  );
 }
-
-
